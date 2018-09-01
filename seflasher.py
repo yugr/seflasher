@@ -22,6 +22,7 @@
 import time
 import re
 import array
+import sys
 
 try:
   import serial
@@ -38,7 +39,7 @@ in command line.
   sys.exit(1)
 
 def log(lev, msg):
-  if lev not in [ 'DBG', 'WARN', 'ERR' ]:
+  if lev not in ['DBG', 'WARN', 'ERR']:
     print('ERR: Unknown logging level: %s' % lev)
   print(lev + ': ' + msg)
 
@@ -91,7 +92,7 @@ def check_packet(i, pak):
   # Check for header
   if pak[0] != 0xAA:
     log('ERR', 'No header (0xAA) in packet %d, inserting' % i)
-    pak = [ 0xAA ] + pak
+    pak.insert(0, 0xAA)
 
   # Check byte values
   for byte in pak:
@@ -99,8 +100,8 @@ def check_packet(i, pak):
       log('ERR', 'Not a byte value: %d' % byte)
 
 def check_packets(paks):
-  for i in range(0, len(paks)):
-    check_packet(i, paks[i])
+  for i, pak in enumerate(paks):
+    check_packet(i, pak)
 
 def encode_packet(pak):
   # Replace magic bytes
@@ -190,7 +191,7 @@ class SeflasherApp(tkinter.Tk):
     speed_list, self.speed_var = create_dropdown(
       port_frame,
       '9600',
-      [ '9600', '19200', '38400', '57600', '115200' ] )
+      ['9600', '19200', '38400', '57600', '115200'])
     speed_list.pack(padx=10, pady=10)
 
     file_frame = tkinter.LabelFrame(self, text='Data')
@@ -202,14 +203,14 @@ class SeflasherApp(tkinter.Tk):
 
     open_pakfile = tkinter.Button(
       file_frame,
-      text = '...',
-      command = lambda : open_pakfile_dialog(self) )
+      text='...',
+      command=lambda: open_pakfile_dialog(self))
     open_pakfile.grid(row=0, column=1, padx=10, pady=10)
 
     send_paks = tkinter.Button(
       self,
-      text = 'Send',
-      command = lambda : self.send_packets() )
+      text='Send',
+      command=self.send_packets)
     send_paks.grid(row=2, column=0, padx=5, pady=5)
 
     self.resizable(0, 0)
@@ -219,17 +220,17 @@ class SeflasherApp(tkinter.Tk):
     if not fname:
       tkinter.messagebox.showerror(
         'File not found',
-        'Please specify name of file with packets' )
+        'Please specify name of file with packets')
       return
 
     try:
       paks = parse_packets(read_file(fname))
-      log('DBG', 'Raw file data: ' + str(paks))
+      log('DBG', 'Raw file data: %s' % paks)
     except ValueError:
       log('ERR', 'Error reading packet')
       tkinter.messagebox.showerror(
         'Failed to read data',
-        'Error reading packet' )
+        'Error reading packet')
       return
 
     check_packets(paks)
@@ -247,7 +248,7 @@ class SeflasherApp(tkinter.Tk):
         port=portname,
         timeout=30,
         writeTimeout=30,
-        baudrate=speed )
+        baudrate=speed)
 
       # TODO: do something with ans?
       for pak in paks:
@@ -260,7 +261,7 @@ class SeflasherApp(tkinter.Tk):
       log('ERR', 'Error opening port')
       tkinter.messagebox.showerror(
         'Failed to open port',
-        'Error opening port' )
+        'Error opening port')
       return
 
 def main():
